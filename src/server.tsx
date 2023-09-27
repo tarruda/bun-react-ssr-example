@@ -1,39 +1,17 @@
-import path from 'path';
-import url from 'url';
 import fs from 'fs';
+import path from 'path';
+
 import type { ServeOptions } from 'bun';
 
 import { renderToReadableStream } from 'react-dom/server';
 
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+import { devWatcher, srcRouter, buildRouter, BUILD_DIR, PUBLIC_DIR } from './build'
 
-const PROJECT_ROOT = path.dirname(__dirname);
-const PUBLIC_DIR = path.resolve(PROJECT_ROOT, 'public');
-const BUILD_DIR = path.resolve(PROJECT_ROOT, '.build');
+const dev = process.env.NODE_ENV !== 'production'
 
-const srcRouter = new Bun.FileSystemRouter({
-  dir: path.join(__dirname, './pages'),
-  style: 'nextjs',
-});
-
-async function browserRebuild() {
-  await Bun.build({
-    entrypoints: [
-      path.join(__dirname, '/hydrate.tsx'),
-      ...Object.values(srcRouter.routes),
-    ],
-    outdir: BUILD_DIR,
-    target: 'browser',
-    splitting: true,
-  });
+if (dev) {
+  await devWatcher();
 }
-
-await browserRebuild();
-
-const buildRouter = new Bun.FileSystemRouter({
-  dir: path.join(BUILD_DIR, '/pages'),
-  style: 'nextjs',
-});
 
 function serveFromDir(config: {
   directory: string;
